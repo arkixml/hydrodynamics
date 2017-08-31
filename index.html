@@ -1,0 +1,562 @@
+<!doctype html>
+<html>
+<head>
+    <title>FLL Hydro Dynamics Scoresheet</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style type="text/css">
+@media screen and (min-width: 768px) {
+    #content{ column-count: 2;}
+}
+
+@media screen and (min-width: 1300px) {
+    #content{ column-count: 3;}
+}
+
+@media screen and (min-width: 1600px) {
+    #content{ column-count: 4;}
+}
+
+body{
+    font-family: sans-serif;
+}
+
+p{
+    margin:0;
+}
+
+#header{
+    top:0;
+    right:0;
+    left:0;
+    position: fixed;
+    height: 30px;
+    background-color: #ddd;
+    padding: 5px 10px;
+}
+
+#header h1{
+    margin: 0;
+    font-size: 22px;
+}
+
+#headerright{
+    float:right;
+}
+
+#content{
+    margin-top: 50px;
+}
+
+#about{
+    text-align: center;
+    padding: 2em;
+    font-size: 0.8em;
+}
+
+.mission, #looseitems{
+    background-color: #fff;
+    border: 1px solid #aaa;
+    padding: 3px;
+    margin-bottom: 5px;
+    -webkit-column-break-inside: avoid;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+.mission ul > li{
+    border: 1px solid #000;
+    display: inline-block;
+    cursor: pointer;
+    padding: 3px 5px;
+    margin: 3px;
+}
+
+.mission ul > li.selected{
+    background-color: lawngreen;
+}
+
+.mission ul {
+    float: right;
+    margin: 0;
+    padding: 0 5px;
+}
+
+.mission > div > div {
+    min-height: 2em;
+    padding: 1px;
+    margin-top: 5px;
+}
+
+h2 {
+    margin: 0;
+}
+
+.score{
+    float: right;
+}
+
+.invalid{
+    background-color: #f55;
+}
+
+.note{
+    color: #090;
+}
+    </style>
+
+    <script>
+var missions = [
+    {
+        "title": "M01 - Pipe Removal",
+        "sections": [
+            {
+                "text": "Broken Pipe is completely in Base",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return option == "Yes" ? 20 : 0
+                }
+            }
+        ]
+    },
+    {
+        "title": "M02 - Flow",
+        "sections": [
+            {
+                "text": "Big Water is on other team's Field (only by turning Pump System's valves(s))",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return option == "Yes" ? 25 : 0
+                }
+            }
+        ]
+    },
+    {
+        "title": "M03 - Pump Addition",
+        "sections": [
+            {
+                "text": "Move the Pump Addition so it has contact with the mat and that contact is completely in the Pump Addition target.",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return option == "Yes" ? 20 : 0
+                }
+            }
+        ]
+    },
+    {
+        "title": "M04 - Rain",
+        "sections": [
+            {
+                "text": "Make at least one Rain come out of the Rain Cloud.",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return option == "Yes" ? 20 : 0
+                }
+            }
+        ]
+    },
+    {
+        "title": "M05 - Filter",
+        "sections": [
+            {
+                "text": "Move the Filter north until the lock latch drops.",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return option == "Yes" ? 30 : 0
+                }
+            }
+        ]
+    },
+    {
+        "title": "M06 - Water Treatment",
+        "sections": [
+            {
+                "text": "Make the Water Treatment model eject its Big Water, *only by moving the Toilet’s lever.",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return option == "Yes" ? 20 : 0
+                }
+            }
+        ]
+    },
+    {
+        "title": "M07 - Fountain",
+        "sections": [
+            {
+                "text": "Make the Fountain’s middle layer rise some obvious height and stay there, due only to a Big Water in the gray tub.",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return option == "Yes" ? 20 : 0
+                }
+            }
+        ]
+    },
+    {
+        "title": "M08 - Manhole Covers",
+        "sections": [
+            {
+                "text": "Manhole Cover(s) are flipped over past vertical (and never reaches base)",
+                "options": [0, 1, 2],
+                "selected_option": 0,
+                "fn_score": function(option) {
+                    return option * 15
+                },
+                "fn_validate": function (option) {
+                    return option == 2 || getMission("M08 - Manhole Covers").sections[1].selected_option == "No"
+                }
+            },
+            {
+                "text": "Both Manhole Covers are flipped over, and completely in separate Tripod targets",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return option == "Yes" ? 30 : 0
+                },
+                "fn_validate": function (option) {
+                    return option == "No" || getMission("M08 - Manhole Covers").sections[0].selected_option == 2
+                }
+            }
+        ]
+    },
+    {
+        "title": "M09 - Tripod",
+        "sections": [
+            {
+                "text": "All the Tripod's feet are touching the mat, and Tripod is in a Tripod target",
+                "options": ["No", "Partially", "Completely"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    if (option == "Partially") {
+                        return 15
+                    } else if (option == "Completely") {
+                        return 20
+                    } else {
+                        return 0
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "title": "M10 - Pipe Replacement",
+        "sections": [
+            {
+                "text": "New Pipe is installed where the broken one was, in full/flat contact with the mat.",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return option == "Yes" ? 20 : 0
+                }
+            }
+        ]
+    },
+    {
+        "title": "M11 - Pipe Construction",
+        "sections": [
+            {
+                "text": "New Pipe has full/flat contact with the mat and is installed in it's target",
+                "options": ["No", "Partially", "Completely"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    if (option == "Partially") {
+                        return 15
+                    } else if (option == "Completely") {
+                        return 20
+                    } else {
+                        return 0
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "title": "M12 - Sludge",
+        "sections": [
+            {
+                "text": "Sludge touching visible wood of a drawn garden box",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return option == "Yes" ? 30 : 0
+                }
+            }
+        ]
+    },
+    {
+        "title": "M13 - Flower",
+        "sections": [
+            {
+                "text": "Flower is raised (due only to a Big Water in brown pot)",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return option == "Yes" ? 30 : 0
+                }
+            },
+            {
+                "text": "At least 1 Rain in purple part, touching nothing but Flower",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return getMission("M13 - Flower").sections[0].selected_option == "Yes" && option == "Yes" ? 30 : 0
+                }
+            }
+        ]
+    },
+    {
+        "title": "M14 - Water Well",
+        "sections": [
+            {
+                "text": "Water Well contacting mat inside target area",
+                "options": ["No", "Partially", "Completely"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    if (option == "Partially") {
+                        return 15
+                    } else if (option == "Completely") {
+                        return 25
+                    } else {
+                        return 0
+                    }
+                }
+            }
+        ]
+    },
+    {
+        "title": "M15 - Fire",
+        "sections": [
+            {
+                "text": "Fire is dropped (due only to Firetruck applying direct force to House’s lever)",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return option == "Yes" ? 25 : 0
+                }
+            }
+        ]
+    },
+    {
+        "title": "M16 - Water Collection",
+        "notes": "(Water may be touching target and/or other clean water) \n (Water may not be touching or guided by anything else)",
+        "sections": [
+            {
+                "text": " Water Target is East of Off-Limits line (and never reached Off-Limit line)",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return 0
+                }
+            },
+            {
+                "text": "At least one Rain is touching mat in Water Target",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return getMission("M16 - Water Collection").sections[0].selected_option == "Yes" && option == "Yes" ? 10 : 0
+                }
+            },
+            {
+                "text": "Big Water touching mat in Water Target",
+                "options": [0, 1, 2, 3, 4, 5],
+                "selected_option": 0,
+                "fn_score": function(option) {
+                    if (getMission("M16 - Water Collection").sections[0].selected_option == "Yes"){
+                        return option * 10
+                    }else{
+                        return 0
+                    }
+                },
+                "fn_validate": function(option){
+                    return (option >=1 && option <= 4) || getMission("M16 - Water Collection").sections[3].selected_option == "No"
+                }
+            },
+            {
+                "text": "At least one pair of Big Waters stacked in Water Target ",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return getMission("M16 - Water Collection").sections[0].selected_option == "Yes" && option == "Yes" ? 30 : 0
+                },
+                "fn_validate": function(option){
+                    water_option = getMission("M16 - Water Collection").sections[2].selected_option
+                    return option == "No" || (water_option <= 4 && water_option >= 1)
+                }
+            }
+        ]
+    },
+    {
+        "title": "M17 - Slingshot",
+        "sections": [
+            {
+                "text": "Slingshot is completely in the Slingshot target ",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return option == "Yes" ? 20 : 0
+                }
+            },
+            {
+                "text": "Rain AND Dirty Water completely in Slingshot target",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return getMission("M17 - Slingshot").sections[0].selected_option == "Yes" && option == "Yes" ? 15 : 0
+                }
+            }
+        ]
+    },
+    {
+        "title": "M18 - Faucet",
+        "sections": [
+            {
+                "text": "Water level is more blue than white (only by turning Faucet handle)",
+                "options": ["Yes", "No"],
+                "selected_option": "No",
+                "fn_score": function (option) {
+                    return option == "Yes" ? 25 : 0
+                }
+            }
+        ]
+    },
+    {
+        "title": "Penalties",
+        "sections": [
+            {
+                "text": "Penalty discs in the white triangle area",
+                "options": [0, 1, 2, 3, 4, 5, 6],
+                "selected_option": 0,
+                "fn_score": function(option) {
+                    return option * -5
+                }
+            }
+        ]
+    },
+
+]
+
+function getMission(name){
+    for(var mission_id in missions){
+        if (missions[mission_id].title == name) {
+            return missions[mission_id]
+        }
+    }
+}
+
+// Generate the page, based on the mission data.
+function load(){
+    var missions_element = document.getElementById("missions");
+    missions_element.innerHTML = ''
+
+    missions.points = 0
+    missions.forEach(function(mission){
+        var title_element = document.createElement("h2")
+        var score_element = document.createElement("span")
+        title_element.appendChild(score_element)
+        score_element.className = "score"
+        title_element.appendChild(document.createTextNode(mission.title))
+
+        var mission_element = document.createElement("div")
+        mission_element.className = "mission"
+        mission_element.appendChild(title_element);
+        sections_element = document.createElement("div")
+
+        mission.points = 0
+
+        mission.sections.forEach(function (section){
+            var section_element = document.createElement("div")
+            var options_element = document.createElement("ul")
+            
+            section.options.forEach(function(option){
+                var option_element = document.createElement("li")
+                option_element.textContent = option
+                if (section.selected_option == option) {
+                    option_element.className = "selected"
+                }
+
+                option_element.addEventListener("click", function(){
+                    section.selected_option = this.textContent
+                    load()
+                })
+
+                options_element.appendChild(option_element)
+            })
+
+            section.points = section.fn_score(section.selected_option)
+            if (section.fn_validate != null) {
+                if (section.fn_validate(section.selected_option)) {
+                    section_element.className = ""
+                } else {
+                    section_element.className = "invalid"
+                    section.points = NaN
+                }
+            }
+
+            section_element.appendChild(options_element)
+
+            var text_element = document.createElement("p")
+            text_element.textContent = section.text
+            section_element.appendChild(text_element)
+            sections_element.appendChild(section_element)
+
+            mission.points += section.points
+        })
+        missions.points += mission.points
+        
+        score_element.textContent = mission.points
+        if (mission.notes != null) {
+            var notes_element = document.createElement("p")
+            notes_element.className = "note"
+            notes_element.textContent = mission.notes
+            mission_element.appendChild(notes_element)
+        }   
+        mission_element.appendChild(sections_element)
+        missions_element.appendChild(mission_element)
+    })
+
+    document.getElementById("totalscore").textContent = missions.points
+}
+    </script>
+</head>
+<body onload="load()">
+    <div id="header">
+        <h1><span style="color: #092e6b">Hydro</span><span style="color: #890000">Dynamics</span><span id="headerright"><span id="totalscore">0</span> Pts</span></h1>
+    </div>
+    <div id="content">
+        <div id="missions"></div>
+        <div id="looseitems">
+            <h2>Loose Items</h2>
+            <ul>
+                <li>1x Firetruck</li>
+                <li>6x Penalties</li>
+                <li>1x Slingshot</li>
+                <li>9x Rain</li>
+                <li>5x Big Water</li>
+                <li>1x Optional Loop</li>
+                <li>2x Manhole Cover</li>
+                <li>1x Sludge</li>
+                <li>1x Broken Pipe</li>
+                <li>2x New Pipe</li>
+                <li>1x Pump Addition</li>
+                <li>1x Water Target</li>
+                <li>1x Water Well</li>
+                <li>1x Tripod</li>
+                <li>1x Dirty Water</li>
+            </ul>
+        </div>
+    </div>
+    <div id="about">
+        <p>Created by Arlo Siemsen | Refresh to reset | Last updated August 30th, 2017.</p>
+        <p>
+            <a href="https://firstinspiresst01.blob.core.windows.net/fll/hydro-dynamics-challenge-letter.pdf">Challenge PDF</a> |
+            <a href="https://firstinspiresst01.blob.core.windows.net/fll/hydro-dynamics-graphical-score-sheet.pdf">Score sheet PDF</a>
+        </p>
+    </div>
+</body>
+</html>
