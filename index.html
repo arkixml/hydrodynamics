@@ -155,6 +155,9 @@ var missions = [
                 "selected_option": "No",
                 "fn_score": function (option) {
                     return option == "Yes" ? 20 : 0
+                },
+                "fn_validate": function (option) {
+                    return option == "Yes" || (getMission("M13 - Flower").sections[1].selected_option == "No" && getMission("M16 - Water Collection").sections[1].selected_option == "No" && getMission("M17 - Slingshot").sections[1].selected_option == "No")
                 }
             }
         ]
@@ -306,6 +309,9 @@ var missions = [
                 "selected_option": "No",
                 "fn_score": function (option) {
                     return getMission("M13 - Flower").sections[0].selected_option == "Yes" && option == "Yes" ? 30 : 0
+                },
+                "fn_validate": function (option) {
+                    return getMission("M04 - Rain").sections[0].selected_option == "Yes" || option == "No"
                 }
             }
         ]
@@ -360,6 +366,9 @@ var missions = [
                 "selected_option": "No",
                 "fn_score": function (option) {
                     return getMission("M16 - Water Collection").sections[0].selected_option == "Yes" && option == "Yes" ? 10 : 0
+                },
+                "fn_validate": function (option) {
+                    return getMission("M04 - Rain").sections[0].selected_option == "Yes" || option == "No"
                 }
             },
             {
@@ -408,6 +417,9 @@ var missions = [
                 "selected_option": "No",
                 "fn_score": function (option) {
                     return getMission("M17 - Slingshot").sections[0].selected_option == "Yes" && option == "Yes" ? 15 : 0
+                },
+                "fn_validate": function (option) {
+                    return getMission("M04 - Rain").sections[0].selected_option == "Yes" || option == "No"
                 }
             }
         ]
